@@ -392,11 +392,16 @@ void USB_ExtraSetState(uint8_t state) {
 
 void USB_HandleExtraDevice(void) {
     uint16_t adcval;
+    uint16_t adc_threshold;
 
-    if (usb_host_port == USB_HOST_PORT_1)
+    if (usb_host_port == USB_HOST_PORT_1) {
         adcval = adc_get(ADC_CON2);
-    else if (usb_host_port == USB_HOST_PORT_2)
+        adc_threshold = USB_EXTRA_ADC_THRESHOLD;
+    }
+    else if (usb_host_port == USB_HOST_PORT_2) {
         adcval = adc_get(ADC_CON1);
+        adc_threshold = USB_EXTRA_ADC_THRESHOLD_P1;
+    }
     else
         return;
 
@@ -405,7 +410,7 @@ void USB_HandleExtraDevice(void) {
     // Check for a forced disable state (such as overload prevention)
     if (usb_extra_state == USB_EXTRA_STATE_DISABLED_UNTIL_REPLUG) {
         // Detect unplug and reset state to disabled
-        if (adc_extra > USB_EXTRA_ADC_THRESHOLD) usb_extra_state = USB_EXTRA_STATE_DISABLED;
+        if (adc_extra > adc_threshold) usb_extra_state = USB_EXTRA_STATE_DISABLED;
 
         return;  // Return even if unplug detected
     }
@@ -417,9 +422,9 @@ void USB_HandleExtraDevice(void) {
     }
 
     // dpf("a %i %i\r\n",adcval, adc_extra);
-    if (usb_extra_state == USB_EXTRA_STATE_DISABLED && adc_extra < USB_EXTRA_ADC_THRESHOLD)
+    if (usb_extra_state == USB_EXTRA_STATE_DISABLED && adc_extra < adc_threshold)
         USB_ExtraSetState(USB_EXTRA_STATE_ENABLED);
-    else if (usb_extra_state == USB_EXTRA_STATE_ENABLED && adc_extra > USB_EXTRA_ADC_THRESHOLD)
+    else if (usb_extra_state == USB_EXTRA_STATE_ENABLED && adc_extra > adc_threshold)
         USB_ExtraSetState(USB_EXTRA_STATE_DISABLED);
 }
 
